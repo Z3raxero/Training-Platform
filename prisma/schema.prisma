@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  certifications Certification[]
+  studyPlans     StudyPlan[]
+  examResults    ExamResult[]
+  trainingPlans  TrainingPlan[]
+}
+
+model Certification {
+  id            String   @id @default(cuid())
+  name          String
+  issuer        String
+  acquiredDate  DateTime?
+  expiryDate    DateTime?
+  status        CertificationStatus @default(IN_PROGRESS)
+  progress      Int      @default(0)
+  certificateUrl String?
+  notes         String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudyPlan {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  progress    Int      @default(0)
+  targetDate  DateTime?
+  startDate   DateTime @default(now())
+  totalDays   Int
+  isActive    Boolean  @default(true)
+  notes       String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studyTasks  StudyTask[]
+}
+
+model StudyTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  isCompleted Boolean  @default(false)
+  dueDate     DateTime?
+  order       Int      @default(0)
+  studyPlanId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+}
+
+model ExamResult {
+  id            String   @id @default(cuid())
+  title         String
+  examName      String
+  score         Int?
+  maxScore      Int?
+  percentage    Float?
+  passed        Boolean?
+  examDate      DateTime?
+  fileUrl       String?
+  fileName      String?
+  fileType      String?
+  fileSize      Int?
+  notes         String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrainingPlan {
+  id            String   @id @default(cuid())
+  title         String
+  targetCertification String
+  currentSkillLevel String
+  studyHoursPerWeek Int
+  targetDate    DateTime?
+  generatedPlan String
+  isActive      Boolean  @default(true)
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudyResource {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  type          ResourceType
+  url           String?
+  content       String?
+  category      String?
+  difficulty    String?
+  estimatedTime Int?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum CertificationStatus {
+  ACTIVE
+  EXPIRED
+  IN_PROGRESS
+  NOT_STARTED
+}
+
+enum ResourceType {
+  DOCUMENT
+  VIDEO
+  PRACTICE_EXAM
+  PROJECT
+  ARTICLE
+  TUTORIAL
+}
